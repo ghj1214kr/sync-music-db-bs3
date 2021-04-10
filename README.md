@@ -68,6 +68,20 @@ create an `EventEmitter` to sync the specified `dirs` directory array to a
 ### async syncMusicDb.createTable()
 create the `tracks` table in the `sqliteDb` instance.
 
+### syncMusicDb.addDirs(dirs)
+add `dirs` to `syncMusicDb`.
+
+return false if `syncMusicDb` is syncing.
+
+`.refresh` call is required for effect
+
+### syncMusicDb.removeDirs(dirs)
+remove `dirs` from `syncMusicDb`
+
+return false if `syncMusicDb` is syncing.
+
+`.refresh` call is required for effect
+
 ### syncMusicDb.refresh()
 do an initial sync with the specified `dirs` and begin watching it for
 new changes.

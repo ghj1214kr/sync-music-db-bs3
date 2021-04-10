@@ -284,6 +284,25 @@ class SyncMusicDb extends EventEmitter {
         this.isSynced = false;
         this.emit('synced', this.isSynced);
     }
+
+    addDirs(dirs) {
+        if(this.isSynced) {
+            this.dirs.push(...dirs.map(dir => path.resolve(dir)));
+            this.dirs = [...new Set(this.dirs)];
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    removeDirs(dirs) {
+        if(this.isSynced) {
+            this.dirs = this.dirs.filter((dir) => !dirs.includes(dir))
+            return true;
+        } else {
+            return false;
+        }
+    }
 };
 
 SyncMusicDb.TRACK_ATTRS = TRACK_ATTRS;
