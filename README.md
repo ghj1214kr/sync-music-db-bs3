@@ -29,7 +29,7 @@ const Database = require('better-sqlite3');
 
 (async () => {
     const database = new Database("example.db");
-    const syncMusicDb = new SyncMusicDb({ database, dir: './test/_music' });
+    const syncMusicDb = new SyncMusicDb({ db: database, dir: './test/_music' });
 
     await syncMusicDb.createTable();
 
