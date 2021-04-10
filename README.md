@@ -1,4 +1,4 @@
-# sync-music-db
+# sync-music-db-bs3
 
 <p align="center"><img src="./sync-music-db.svg" width="300"></p>
 
@@ -12,22 +12,22 @@ anything that relies on a music library.
 
 ## install
 
-    $ npm install sync-music-db sqlite
+    $ npm install sync-music-db-bs3 better-sqlite3
 
-[sqlite](https://www.npmjs.com/package/sqlite) is a
+[better-sqlite3](https://www.npmjs.com/package/better-sqlite3) is a
 [peerDependency](https://docs.npmjs.com/files/package.json#peerdependencies).
-this module doesn't explicitly `require` it, but it takes a sqlite `db`
+this module doesn't explicitly `require` it, but it takes a better-sqlite3 `db`
 instance in its constructor.
 
 ## example
 
 ```javascript
 const SyncMusicDb = require('./');
-const sqlite = require('sqlite');
+const Database = require('better-sqlite3');
 
 (async () => {
-    const db = await sqlite.open('./example.sqlite');
-    const syncMusicDb = new SyncMusicDb({ db, dir: './test/_music' });
+    const database = new Database("example.db");
+    const syncMusicDb = new SyncMusicDb({ database, dir: './test/_music' });
 
     await syncMusicDb.createTable();
 
@@ -55,7 +55,7 @@ the columns in the `tracks` table.
 
 ### syncMusicDb = new SyncMusicDb({ db, dir, tableName = 'tracks', delay = 1000, ignoreExt = true })
 create an `EventEmitter` to sync the specified `dir` directory to a
-[sqlite](https://www.npmjs.com/package/sqlite) `db` instance.
+[better-sqlite3](https://www.npmjs.com/package/better-sqlite3) `db` instance.
 
 `tableName` specifies which table has `SyncMusicDb.TRACK_ATTRS`.
 

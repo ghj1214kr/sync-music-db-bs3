@@ -1,8 +1,8 @@
 const SyncMusicDb = require('./');
-const sqlite = require('sqlite');
+const Database = require('better-sqlite3');
 
 (async () => {
-    const db = await sqlite.open('./example.sqlite');
+    const db = new Database("example.db");
     const syncMusicDb = new SyncMusicDb({ db, dir: './test/_music' });
 
     await syncMusicDb.createTable();

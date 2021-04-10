@@ -61,7 +61,7 @@ class SyncMusicDb extends EventEmitter {
                 duration: Math.floor(format.duration),
                 track_no: (common.track ? common.track.no : null),
                 tags: JSON.stringify(common.genre),
-                is_vbr: isVbr,
+                is_vbr: isVbr ? 0 : 1,
                 bitrate: Math.floor(format.bitrate / 1000),
                 codec: format.codec,
                 container: format.container
@@ -86,7 +86,6 @@ class SyncMusicDb extends EventEmitter {
 
     async finalizeStatements() {
         for (const prefix of ['removeDir', 'removeTrack', 'upsertTrack']) {
-            await this[`${prefix}Stmt`].finalize();
             delete this[`${prefix}Stmt`];
         }
     }
@@ -139,25 +138,21 @@ class SyncMusicDb extends EventEmitter {
     // remove tracks that don't exist on the filesystem from our database,
     // and remove files from localMtimes that have up-to-date database entries
     async removeDeadTracks() {
-        const query = 'select path as p, mtime from tracks';
+        const query = this.db.prepare('select path as p, mtime from tracks');
+        
+        const transaction = this.db.transaction(async () => {
+            for (const { p, mtime } of query.all()) {
+                const localMtime = this.localMtimes.get(p);
 
-        await this.db.exec('begin transaction');
-
-        await this.db.each(query, async (err, { p, mtime }) => {
-            if (err) {
-                throw err;
-            }
-
-            const localMtime = this.localMtimes.get(p);
-
-            if (!localMtime) {
-                await this.removeDbTrack(p);
-            } else if (localMtime === mtime) {
-                this.localMtimes.delete(p);
+                if (!localMtime) {
+                    await this.removeDbTrack(p);
+                } else if (localMtime === mtime) {
+                    this.localMtimes.delete(p);
+                }
             }
         });
 
-        await this.db.exec('commit');
+        transaction();
     }
 
     // get the metadata from each file in localMtimes and add them to the

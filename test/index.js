@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readdir = require('readdir-enhanced');
 const rimrafSync = require('rimraf').sync;
-const sqlite = require('sqlite');
+const Database = require('better-sqlite3');
 const test = require('tape-async');
 
 const MUSIC_DIR = `${__dirname}${path.sep}_music`;
@@ -73,13 +73,13 @@ function afterRemove(syncer, sP) {
 }
 
 (async () => {
-    const db = await sqlite.open(DB_FILE);
+    const db = new Database("example.db");
     const syncer = new SyncMusicDb({ db, dir: TMP_DIR });
 
     test('syncer.createTable() creates tracks table with attrs', async t => {
         await syncer.createTable();
 
-        const columns = (await db.all('pragma table_info(tracks)')).map(row => {
+        const columns = db.prepare('pragma table_info(tracks)').all().map(row => {
             return row.name;
         });
 
@@ -94,7 +94,7 @@ function afterRemove(syncer, sP) {
         t.timeoutAfter(TIMEOUT);
         syncer.on('error', err => t.error(err));
 
-        t.notOk((await db.all('select 1 from tracks')).length,
+        t.notOk(db.prepare('select 1 from tracks').all().length,
             'initially empty');
         t.notOk(syncer.isReady, 'isReady is false');
 
@@ -118,17 +118,14 @@ function afterRemove(syncer, sP) {
         await syncer.close();
 
         const nonMediaTracks =
-            await db.all('select 1 from tracks where path like' +
-                '"%not-music.txt"');
+            db.prepare('select 1 from tracks where path like' +
+                '@path').all({ path: `%not-music.txt` });
 
         t.notOk(nonMediaTracks.length, 'syncer did not sync non-media file');
 
-        await db.each('select path as p, mtime from tracks', (err, track) => {
-            if (err) {
-                return t.error(err);
-            }
+        const query = db.prepare('select path as p, mtime from tracks');
 
-            const { p, mtime } = track;
+         for await (const { p, mtime } of query.iterate()) {
             const fileMtime = fileMap.get(p);
 
             if (!fileMtime) {
@@ -140,7 +137,7 @@ function afterRemove(syncer, sP) {
                 t.pass(`${path.basename(p)} is on filesystem with correct ` +
                     'mtime');
             }
-        });
+        }
 
         syncer.removeAllListeners();
     });
@@ -157,8 +154,8 @@ function afterRemove(syncer, sP) {
 
         const getTitle = async () => {
             try {
-                return (await db.all('select title from tracks where path = ?',
-                    MUSTARD_FILE))[0].title;
+                return db.prepare('select title from tracks where path = ?')
+                    .all(MUSTARD_FILE)[0].title;
             } catch (e) {
                 t.error(e);
             }
@@ -191,17 +188,17 @@ function afterRemove(syncer, sP) {
         syncer.refresh();
         await afterReady(syncer);
 
-        t.notOk((await db.all(
-            'select 1 from tracks where path like ?',
-            `${ABBEY_ROAD}%`)).length,
+        t.notOk(db.prepare(
+                'select 1 from tracks where path like ?')
+                .all(`${ABBEY_ROAD}%`).length,
             'syncer removes tracks after .refresh()');
 
         setImmediate(() => rimrafSync(ED_BUYS_HOUSES));
         await afterRemove(syncer, ED_BUYS_HOUSES);
 
-        t.notOk((await db.all(
-            'select 1 from tracks where path like ?',
-            `${ED_BUYS_HOUSES}%`)).length,
+        t.notOk(db.prepare(
+                'select 1 from tracks where path like ?')
+                .all(`${ED_BUYS_HOUSES}%`).length,
             'syncer removes tracks live');
 
         const newMustardFile =
@@ -210,9 +207,9 @@ function afterRemove(syncer, sP) {
         setImmediate(() => fs.writeFileSync(newMustardFile, mustardContents));
         await afterAddTrack(syncer, newMustardFile);
 
-        t.ok((await db.all(
-            'select 1 from tracks where path = ?',
-            newMustardFile)).length,
+        t.ok(db.prepare(
+                'select 1 from tracks where path = ?')
+                .all(newMustardFile).length,
             'syncer adds tracks live');
 
         await syncer.close();
@@ -220,7 +217,7 @@ function afterRemove(syncer, sP) {
     });
 
     test('teardown', async t => {
-        await db.close();
+        db.close();
         removeDb();
         removeTmp();
         t.end();

@@ -1,5 +1,5 @@
 {
-  "name": "sync-music-db",
+  "name": "sync-music-db-bs3",
   "version": "1.0.0",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/misterhat/sync-music-db.git"
+    "url": "git+https://github.com/misterhat/sync-music-db-bs3.git"
   },
   "keywords": [
     "sync",
@@ -20,25 +20,25 @@
     "sqlite",
     "db"
   ],
-  "author": "Zorian Medwid <misterhat144@gmail.com>",
+  "author": "ghj1214kr",
   "license": "LGPL-3.0+",
   "bugs": {
-    "url": "https://github.com/misterhat/sync-music-db/issues"
+    "url": "https://github.com/ghj1214kr/sync-music-db-bs3/issues"
   },
-  "homepage": "https://github.com/misterhat/sync-music-db#readme",
+  "homepage": "https://github.com/ghj1214kr/sync-music-db-bs3#readme",
   "devDependencies": {
-    "copy-dir": "^1.2.0",
-    "rimraf": "^3.0.0",
-    "sqlite": "^3.0.3",
+    "copy-dir": "^1.3.0",
+    "rimraf": "^3.0.2",
+    "better-sqlite3": "^7.1.4",
     "tape-async": "^2.3.0"
   },
   "dependencies": {
     "audio-extensions": "0.0.0",
-    "music-metadata": "^6.3.0",
-    "node-watch": "^0.6.3",
-    "readdir-enhanced": "^5.1.1"
+    "music-metadata": "^7.8.3",
+    "node-watch": "^0.7.1",
+    "readdir-enhanced": "^6.0.4"
   },
   "peerDependencies": {
-    "sqlite": "^3.0.3"
+    "better-sqlite3": "^7.1.4"
   }
 }
