@@ -94,13 +94,11 @@ class SyncMusicDb extends EventEmitter {
     // remove all tracks that begin with directory
     async removeDbDir(dir) {
         await this.removeDirStmt.run(`${dir}${path.sep}%`);
-        this.emit('remove', dir);
     }
 
     // remove a single track based on path
     async removeDbTrack(trackPath) {
         await this.removeTrackStmt.run(trackPath);
-        this.emit('remove', trackPath);
     }
 
     // add a single track
@@ -236,6 +234,8 @@ class SyncMusicDb extends EventEmitter {
                     // get deleted
                     await this.removeDbTrack(name);
                     await this.removeDbDir(name);
+
+                    this.emit('remove', name);
                 }
             } catch (e) {
                 if (e.code !== 'ENOENT') {
