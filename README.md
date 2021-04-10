@@ -69,14 +69,14 @@ create an `EventEmitter` to sync the specified `dirs` directory array to a
 create the `tracks` table in the `sqliteDb` instance.
 
 ### syncMusicDb.refresh()
-do an initial sync with the specified `dir` and begin watching it for
+do an initial sync with the specified `dirs` and begin watching it for
 new changes.
 
 ### async syncMusicDb.close()
-stop syncing and watching `dir`.
+stop syncing and watching `dirs`.
 
 ### syncMusicDb.on('synced', isSynced => {})
-is `sqliteDb` up-to-date with `dir`?
+is `sqliteDb` up-to-date with `dirs`?
 
 ### syncMusicDb.on('ready', () => {})
 the initial sync has finished (from a `.refresh` call).
@@ -88,10 +88,10 @@ the initial sync has finished (from a `.refresh` call).
 `path` has been removed.
 
 ### syncMusicDb.isReady
-is `syncMusicDb` listening to live `dir` changes (after initial scan)?
+is `syncMusicDb` listening to live `dirs` changes (after initial scan)?
 
 ### syncMusicDb.isSynced
-is all the metadata from `dir` stored in `db`?
+is all the metadata from `dirs` stored in `db`?
 
 ## license
 LGPL-3.0+
