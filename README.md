@@ -29,7 +29,7 @@ const Database = require('better-sqlite3');
 
 (async () => {
     const database = new Database("example.db");
-    const syncMusicDb = new SyncMusicDb({ db: database, dir: './test/_music' });
+    const syncMusicDb = new SyncMusicDb({ db: database, dirs: ['./test/_music'] });
 
     await syncMusicDb.createTable();
 
@@ -55,8 +55,8 @@ the columns in the `tracks` table.
 ]
 ```
 
-### syncMusicDb = new SyncMusicDb({ db, dir, tableName = 'tracks', delay = 1000, ignoreExt = true })
-create an `EventEmitter` to sync the specified `dir` directory to a
+### syncMusicDb = new SyncMusicDb({ db, dirs, tableName = 'tracks', delay = 1000, ignoreExt = true })
+create an `EventEmitter` to sync the specified `dirs` directory array to a
 [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) `db` instance.
 
 `tableName` specifies which table has `SyncMusicDb.TRACK_ATTRS`.

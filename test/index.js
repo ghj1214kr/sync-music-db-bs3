@@ -74,7 +74,7 @@ function afterRemove(syncer, sP) {
 
 (async () => {
     const db = new Database("example.db");
-    const syncer = new SyncMusicDb({ db, dir: TMP_DIR });
+    const syncer = new SyncMusicDb({ db, dirs: [TMP_DIR] });
 
     test('syncer.createTable() creates tracks table with attrs', async t => {
         await syncer.createTable();

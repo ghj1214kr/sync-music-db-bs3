@@ -26,12 +26,13 @@ function isAudioFile(file) {
 }
 
 class SyncMusicDb extends EventEmitter {
-    constructor({ db, dir, delay = 1000, tableName = 'tracks',
+    constructor({ db, dirs, delay = 1000, tableName = 'tracks',
         ignoreExt = true }) {
         super();
 
         this.db = db;
-        this.dir = path.resolve(dir);
+        this.dirs = dirs.map(dir => path.resolve(dir));
+
         this.tableName = tableName;
         this.delay = delay;
         this.ignoreExt = ignoreExt;
@@ -110,28 +111,34 @@ class SyncMusicDb extends EventEmitter {
 
     // grab every file recursively in the dir specified and set their last-
     // modified time in this.localMtimes map
-    refreshLocalMtimes() {
+    async refreshLocalMtimes() {
         this.localMtimes.clear();
 
-        return new Promise((resolve, reject) => {
-            const dirStream = readdir.stream(this.dir, {
-                basePath: this.dir,
-                deep: true,
-                stats: true
-            });
+        const promiseArray = [];
 
-            dirStream
-                .on('file', stats => {
-                    if (this.ignoreExt && !isAudioFile(stats.path)) {
-                        return;
-                    }
+        for (const dir of this.dirs) {
+            promiseArray.push(new Promise((resolve, reject) => {
+                const dirStream = readdir.stream(dir, {
+                    basePath: dir,
+                    deep: true,
+                    stats: true
+                });
+    
+                dirStream
+                    .on('file', stats => {
+                        if (this.ignoreExt && !isAudioFile(stats.path)) {
+                            return;
+                        }
+    
+                        this.localMtimes.set(stats.path, Math.floor(stats.mtimeMs));
+                    })
+                    .on('end', () => resolve())
+                    .on('error', err => reject(err))
+                    .resume();
+            }));
+        }
 
-                    this.localMtimes.set(stats.path, Math.floor(stats.mtimeMs));
-                })
-                .on('end', () => resolve())
-                .on('error', err => reject(err))
-                .resume();
-        });
+        await Promise.all(promiseArray);
     }
 
 
@@ -173,7 +180,7 @@ class SyncMusicDb extends EventEmitter {
 
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
-        this.watcher = watch(this.dir, {
+        this.watcher = watch(this.dirs, {
             delay: this.delay,
             recursive: true
         }, async (evt, name) => {
