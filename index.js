@@ -49,7 +49,7 @@ class SyncMusicDb extends EventEmitter {
     // get each column of (TRACK_ATTRS) from the media file
     static async getMetaData(path) {
         try {
-            const { common, format } = await mm.parseFile(path);
+            const { common, format } = await mm.parseFile(path, { skipCovers: true });
             const isVbr =
                 format.codec === 'MP3' && /^v/i.test(format.codecProfile);
 
