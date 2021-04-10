@@ -1,3 +1,5 @@
+# This is a forked version of [sync-music-db](https://www.npmjs.com/package/sync-music-db).
+
 # sync-music-db-bs3
 
 <p align="center"><img src="./sync-music-db.svg" width="300"></p>
