@@ -38,6 +38,7 @@ const Database = require('better-sqlite3');
     syncMusicDb
         .on('ready', () => console.timeEnd('sync'))
         .on('add', track => console.log(`${track.title} added`))
+        .on("update", (track) => console.log(`${track.path} updated`))
         .on('remove', path => console.log(`${path} removed`))
         .on('error', err => console.error(err))
         .refresh();
@@ -55,7 +56,7 @@ the columns in the `tracks` table.
 ]
 ```
 
-### syncMusicDb = new SyncMusicDb({ db, dirs, tableName = 'tracks', delay = 1000, ignoreExt = true })
+### syncMusicDb = new SyncMusicDb({ db, dirs, tableName = 'tracks', delay = 1000 })
 create an `EventEmitter` to sync the specified `dirs` directory array to a
 [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) `db` instance.
 
@@ -63,24 +64,18 @@ create an `EventEmitter` to sync the specified `dirs` directory array to a
 
 `delay` specifies how long to wait for file changes (in ms) before reading them.
 
-`ignoreExt` specifies whether to ignore non-media extensions.
-
 ### async syncMusicDb.createTable()
 create the `tracks` table in the `sqliteDb` instance.
 
 ### syncMusicDb.addDirs(dirs)
 add `dirs` to `syncMusicDb`.
 
-return false if `syncMusicDb` is syncing.
-
-`.refresh` call is required for effect
+`.refresh` call is required for effect.
 
 ### syncMusicDb.removeDirs(dirs)
 remove `dirs` from `syncMusicDb`
 
-return false if `syncMusicDb` is syncing.
-
-`.refresh` call is required for effect
+`.refresh` call is required for effect.
 
 ### syncMusicDb.refresh()
 do an initial sync with the specified `dirs` and begin watching it for
@@ -96,7 +91,10 @@ is `sqliteDb` up-to-date with `dirs`?
 the initial sync has finished (from a `.refresh` call).
 
 ### syncMusicDb.on('add', track => {})
-`track` has been added or updated.
+`track` has been added.
+
+### syncMusicDb.on('update', track => {})
+`track` has been updated.
 
 ### syncMusicDb.on('remove', path => {})
 `path` has been removed.

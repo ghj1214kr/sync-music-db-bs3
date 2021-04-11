@@ -2,14 +2,14 @@ const SyncMusicDb = require('../');
 const copydir = require('copy-dir');
 const fs = require('fs');
 const path = require('path');
-const readdir = require('readdir-enhanced');
+const readdir = require('@jsdevtools/readdir-enhanced');
 const rimrafSync = require('rimraf').sync;
 const Database = require('better-sqlite3');
 const test = require('tape-async');
 
 const MUSIC_DIR = `${__dirname}${path.sep}_music`;
 const TMP_DIR = `${__dirname}${path.sep}music`;
-const DB_FILE = `${__dirname}${path.sep}test.sqlite`;
+const DB_FILE = `${__dirname}${path.sep}..${path.sep}test.db`;
 
 const ABBEY_ROAD = `${TMP_DIR}${path.sep}the-beatles${path.sep}abbey-road`;
 const ED_BUYS_HOUSES = `${TMP_DIR}${path.sep}ed-buys-houses`;
@@ -62,10 +62,22 @@ function afterAddTrack(syncer, file) {
     });
 }
 
+function afterUpdate(syncer, file) {
+    return new Promise((resolve, reject) => {
+        syncer.once('update', track => {
+            if (track.path === file) {
+                resolve();
+            } else {
+                reject(new Error(`unexpected file "${track.path}" changed`));
+            }
+        });
+    });
+}
+
 function afterRemove(syncer, sP) {
     return new Promise(resolve => {
         syncer.on('remove', p => {
-            if (p === sP) {
+            if (path.dirname(p) === sP) {
                 resolve();
             }
         });
@@ -73,7 +85,7 @@ function afterRemove(syncer, sP) {
 }
 
 (async () => {
-    const db = new Database("example.db");
+    const db = new Database(DB_FILE);
     const syncer = new SyncMusicDb({ db, dirs: [TMP_DIR] });
 
     test('syncer.createTable() creates tracks table with attrs', async t => {
@@ -169,7 +181,7 @@ function afterRemove(syncer, sP) {
             'syncer updated metadata after .refresh()');
 
         updateTitle(MUSTARD);
-        await afterAddTrack(syncer, MUSTARD_FILE);
+        await afterUpdate(syncer, MUSTARD_FILE);
         await syncer.close();
 
         t.equals(await getTitle(), 'Mean Mr. Mustard',

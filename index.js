@@ -2,8 +2,8 @@ const audioExtensions = require('audio-extensions');
 const fs = require('fs');
 const mm = require('music-metadata');
 const path = require('path');
-const readdir = require('readdir-enhanced');
-const watch = require('node-watch');
+const readdir = require('@jsdevtools/readdir-enhanced');
+const chokidar = require('chokidar');
 const { EventEmitter } = require('events');
 
 // each of the columns in our database table
@@ -20,22 +20,18 @@ const UPSERT_TRACK =
     `(${TRACK_ATTRS.map(() => '?').join(',')}) on conflict(path) do update ` +
     `set ${TRACK_ATTRS.slice(1).map(attr => `${attr}=excluded.${attr}`)}`;
 
-function isAudioFile(file) {
-    const ext = path.extname(file).slice(1);
-    return audioExtensions.indexOf(ext) !== -1;
-}
-
 class SyncMusicDb extends EventEmitter {
-    constructor({ db, dirs, delay = 1000, tableName = 'tracks',
-        ignoreExt = true }) {
+    constructor({ db, dirs, delay = 1000, tableName = 'tracks'}) {
         super();
+
+        this.globPattern = '/**/*.+(' + audioExtensions.join('|') + ')';
+        this.regex = new RegExp('.+\.(' + audioExtensions.join('|') +')$', 'i');
 
         this.db = db;
         this.dirs = dirs.map(dir => path.resolve(dir));
 
         this.tableName = tableName;
         this.delay = delay;
-        this.ignoreExt = ignoreExt;
 
         // { path: fs.stat.mtimeMs }
         this.localMtimes = new Map();
@@ -99,12 +95,13 @@ class SyncMusicDb extends EventEmitter {
     // remove a single track based on path
     async removeDbTrack(trackPath) {
         await this.removeTrackStmt.run(trackPath);
+        this.emit('remove', trackPath);
     }
 
     // add a single track
-    async upsertDbTrack(track) {
+    async upsertDbTrack(track, update = false) {
         await this.upsertTrackStmt.run(TRACK_ATTRS.map(attr => track[attr]));
-        this.emit('add', track);
+        this.emit(update ? 'update' : 'add', track);
     }
 
     // grab every file recursively in the dir specified and set their last-
@@ -117,6 +114,7 @@ class SyncMusicDb extends EventEmitter {
         for (const dir of this.dirs) {
             promiseArray.push(new Promise((resolve, reject) => {
                 const dirStream = readdir.stream(dir, {
+                    filter: this.regex,
                     basePath: dir,
                     deep: true,
                     stats: true
@@ -124,10 +122,6 @@ class SyncMusicDb extends EventEmitter {
     
                 dirStream
                     .on('file', stats => {
-                        if (this.ignoreExt && !isAudioFile(stats.path)) {
-                            return;
-                        }
-    
                         this.localMtimes.set(stats.path, Math.floor(stats.mtimeMs));
                     })
                     .on('end', () => resolve())
@@ -178,71 +172,45 @@ class SyncMusicDb extends EventEmitter {
 
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
-        this.watcher = watch(this.dirs, {
-            delay: this.delay,
-            recursive: true
-        }, async (evt, name) => {
+        this.watcher = chokidar.watch(this.dirs.map(dir => dir.replace(/\\\\/g,"/") + this.globPattern), {
+            usePolling: true,
+            ignoreInitial: true,
+            atomic: this.delay
+        });
+        this.watcher.on('add', async (path) => {
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
-            try {
-                if (evt === 'update') {
-                    const stats = await fs.promises.stat(name);
+            const stats = await fs.promises.stat(path);
 
-                    if (stats.isDirectory()) {
-                        const files = await readdir(name, {
-                            basePath: name,
-                            deep: true,
-                            stats: true
-                        });
+            await this.upsertDbTrack(Object.assign({
+                path: path,
+                mtime: Math.floor(stats.mtimeMs)
+            }, await SyncMusicDb.getMetaData(path)));
 
-                        await this.db.exec('begin transaction');
+            this.isSynced = true;
+            this.emit('synced', this.isSynced);
+        });
+        this.watcher.on('change', async (path) => {
+            this.isSynced = false;
+            this.emit('synced', this.isSynced);
 
-                        for (const file of files) {
-                            if (file.isDirectory()) {
-                                continue;
-                            }
+            const stats = await fs.promises.stat(path);
 
-                            if (this.ignoreExt && !isAudioFile(file.path)) {
-                                continue;
-                            }
+            await this.upsertDbTrack(Object.assign({
+                path: path,
+                mtime: Math.floor(stats.mtimeMs)
+            }, await SyncMusicDb.getMetaData(path)), true);
 
-                            const track =
-                                await SyncMusicDb.getMetaData(file.path);
+            this.isSynced = true;
+            this.emit('synced', this.isSynced);
+        });
+        this.watcher.on('unlink', async (path) => {
+            this.isSynced = false;
+            this.emit('synced', this.isSynced);
 
-                            Object.assign(track, {
-                                path: file.path,
-                                mtime: Math.floor(file.mtimeMs)
-                            });
-
-                            await this.upsertDbTrack(track);
-                        }
-
-                        await this.db.exec('commit');
-                    } else {
-                        if (this.ignoreExt && !isAudioFile(name)) {
-                            return;
-                        }
-
-                        await this.upsertDbTrack(Object.assign({
-                            path: name,
-                            mtime: Math.floor(stats.mtimeMs)
-                        }, await SyncMusicDb.getMetaData(name)));
-                    }
-                } else if (evt === 'remove') {
-                    // run both because if it isn't a directory, nothing will
-                    // get deleted
-                    await this.removeDbTrack(name);
-                    await this.removeDbDir(name);
-
-                    this.emit('remove', name);
-                }
-            } catch (e) {
-                if (e.code !== 'ENOENT') {
-                    this.emit('error', e);
-                }
-            }
-
+            await this.removeDbTrack(path);
+            
             this.isSynced = true;
             this.emit('synced', this.isSynced);
         });
@@ -286,22 +254,12 @@ class SyncMusicDb extends EventEmitter {
     }
 
     addDirs(dirs) {
-        if(this.isSynced) {
-            this.dirs.push(...dirs.map(dir => path.resolve(dir)));
-            this.dirs = [...new Set(this.dirs)];
-            return true;
-        } else {
-            return false;
-        }
+        this.dirs.push(...dirs.map(dir => path.resolve(dir)));
+        this.dirs = [...new Set(this.dirs)];
     }
 
     removeDirs(dirs) {
-        if(this.isSynced) {
-            this.dirs = this.dirs.filter((dir) => !dirs.includes(dir))
-            return true;
-        } else {
-            return false;
-        }
+        this.dirs = this.dirs.filter((dir) => !dirs.includes(dir))
     }
 };
 
