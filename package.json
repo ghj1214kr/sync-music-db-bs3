@@ -1,6 +1,6 @@
 {
   "name": "sync-music-db-bs3",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "index.js",
   "scripts": {
@@ -36,8 +36,7 @@
     "@jsdevtools/readdir-enhanced": "^6.0.4",
     "audio-extensions": "0.0.0",
     "chokidar": "^3.5.1",
-    "music-metadata": "^7.8.3",
-    "node-watch": "^0.7.1"
+    "music-metadata": "^7.8.3"
   },
   "peerDependencies": {
     "better-sqlite3": "^7.1.4"
