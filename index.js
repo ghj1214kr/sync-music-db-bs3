@@ -12,11 +12,11 @@ const TRACK_ATTRS = [
     'tags', 'is_vbr', 'bitrate', 'codec', 'container'
 ];
 
-const CREATE_TABLE = fs.readFileSync(path.join(__dirname, 'tracks.sql'))
+const CREATE_TABLE = fs.readFileSync(path.join(__dirname, 'library.sql'))
     .toString();
 
 const UPSERT_TRACK =
-    `insert into tracks (${TRACK_ATTRS}) values ` +
+    `insert into library (${TRACK_ATTRS}) values ` +
     `(${TRACK_ATTRS.map(() => '?').join(',')}) on conflict(path) do update ` +
     `set ${TRACK_ATTRS.slice(1).map(attr => `${attr}=excluded.${attr}`)}`;
 
@@ -73,9 +73,9 @@ class SyncMusicDb extends EventEmitter {
 
     async prepareStatements() {
         this.removeDirStmt =
-            await this.db.prepare('delete from tracks where path like ?');
+            await this.db.prepare('delete from library where path like ?');
         this.removeTrackStmt =
-            await this.db.prepare('delete from tracks where path = ?');
+            await this.db.prepare('delete from library where path = ?');
         this.upsertTrackStmt = await this.db.prepare(UPSERT_TRACK);
     }
 
@@ -135,7 +135,7 @@ class SyncMusicDb extends EventEmitter {
     // remove tracks that don't exist on the filesystem from our database,
     // and remove files from localMtimes that have up-to-date database entries
     removeDeadTracks() {
-        const query = this.db.prepare('select path as p, mtime from tracks');
+        const query = this.db.prepare('select path as p, mtime from library');
         
         const transaction = this.db.transaction(() => {
             for (const { p, mtime } of query.all()) {

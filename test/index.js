@@ -88,25 +88,25 @@ function afterRemove(syncer, sP) {
     const db = new Database(DB_FILE);
     const syncer = new SyncMusicDb({ db, dirs: [TMP_DIR] });
 
-    test('syncer.createTable() creates tracks table with attrs', async t => {
+    test('syncer.createTable() creates library table with attrs', async t => {
         await syncer.createTable();
 
-        const columns = db.prepare('pragma table_info(tracks)').all().map(row => {
+        const columns = db.prepare('pragma table_info(library)').all().map(row => {
             return row.name;
         });
 
         for (const attr of SyncMusicDb.TRACK_ATTRS) {
             if (columns.indexOf(attr) < 0) {
-                t.fail(`"${column}" not found in tracks table`);
+                t.fail(`"${column}" not found in library table`);
             }
         }
     });
 
-    test('syncer.refresh() populates tracks table', async t => {
+    test('syncer.refresh() populates library table', async t => {
         t.timeoutAfter(TIMEOUT);
         syncer.on('error', err => t.error(err));
 
-        t.notOk(db.prepare('select 1 from tracks').all().length,
+        t.notOk(db.prepare('select 1 from library').all().length,
             'initially empty');
         t.notOk(syncer.isReady, 'isReady is false');
 
@@ -130,12 +130,12 @@ function afterRemove(syncer, sP) {
         await syncer.close();
 
         const nonMediaTracks =
-            db.prepare('select 1 from tracks where path like' +
+            db.prepare('select 1 from library where path like' +
                 '@path').all({ path: `%not-music.txt` });
 
         t.notOk(nonMediaTracks.length, 'syncer did not sync non-media file');
 
-        const query = db.prepare('select path as p, mtime from tracks');
+        const query = db.prepare('select path as p, mtime from library');
 
          for await (const { p, mtime } of query.iterate()) {
             const fileMtime = fileMap.get(p);
@@ -166,7 +166,7 @@ function afterRemove(syncer, sP) {
 
         const getTitle = async () => {
             try {
-                return db.prepare('select title from tracks where path = ?')
+                return db.prepare('select title from library where path = ?')
                     .all(MUSTARD_FILE)[0].title;
             } catch (e) {
                 t.error(e);
@@ -201,7 +201,7 @@ function afterRemove(syncer, sP) {
         await afterReady(syncer);
 
         t.notOk(db.prepare(
-                'select 1 from tracks where path like ?')
+                'select 1 from library where path like ?')
                 .all(`${ABBEY_ROAD}%`).length,
             'syncer removes tracks after .refresh()');
 
@@ -209,7 +209,7 @@ function afterRemove(syncer, sP) {
         await afterRemove(syncer, ED_BUYS_HOUSES);
 
         t.notOk(db.prepare(
-                'select 1 from tracks where path like ?')
+                'select 1 from library where path like ?')
                 .all(`${ED_BUYS_HOUSES}%`).length,
             'syncer removes tracks live');
 
@@ -220,7 +220,7 @@ function afterRemove(syncer, sP) {
         await afterAddTrack(syncer, newMustardFile);
 
         t.ok(db.prepare(
-                'select 1 from tracks where path = ?')
+                'select 1 from library where path = ?')
                 .all(newMustardFile).length,
             'syncer adds tracks live');
 

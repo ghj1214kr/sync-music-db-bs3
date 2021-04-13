@@ -47,7 +47,7 @@ const Database = require('better-sqlite3');
 
 ## api
 ### SyncMusicDb.TRACK\_ATTRS
-the columns in the `tracks` table.
+the columns in the `library` table.
 
 ```javascript
 [
@@ -63,7 +63,7 @@ create an `EventEmitter` to sync the specified `dirs` directory array to a
 `delay` specifies how long to wait for file changes (in ms) before reading them.
 
 ### async syncMusicDb.createTable()
-create the `tracks` table in the `sqliteDb` instance.
+create the `library` table in the `sqliteDb` instance.
 
 ### syncMusicDb.addDirs(dirs)
 add `dirs` to `syncMusicDb`.

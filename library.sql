@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS tracks (
+CREATE TABLE IF NOT EXISTS library (
 	"id"	INTEGER,
 	"path"	TEXT UNIQUE,
 	"mtime"	INTEGER,
@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS tracks (
 	PRIMARY KEY("id")
 );
 
-CREATE INDEX IF NOT EXISTS "artist" ON tracks (
+CREATE INDEX IF NOT EXISTS "artist" ON library (
 	"artist"	ASC
 );
 
-CREATE INDEX IF NOT EXISTS "title" ON tracks (
+CREATE INDEX IF NOT EXISTS "title" ON library (
 	"title"
 );
