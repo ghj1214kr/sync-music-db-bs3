@@ -136,15 +136,15 @@ class SyncMusicDb extends EventEmitter {
 
     // remove tracks that don't exist on the filesystem from our database,
     // and remove files from localMtimes that have up-to-date database entries
-    async removeDeadTracks() {
+    removeDeadTracks() {
         const query = this.db.prepare('select path as p, mtime from tracks');
         
-        const transaction = this.db.transaction(async () => {
+        const transaction = this.db.transaction(() => {
             for (const { p, mtime } of query.all()) {
                 const localMtime = this.localMtimes.get(p);
 
                 if (!localMtime) {
-                    await this.removeDbTrack(p);
+                    this.removeDbTrack(p);
                 } else if (localMtime === mtime) {
                     this.localMtimes.delete(p);
                 }
