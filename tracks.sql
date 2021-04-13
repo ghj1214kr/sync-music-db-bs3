@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS $table_name (
+CREATE TABLE IF NOT EXISTS tracks (
 	"id"	INTEGER,
 	"path"	TEXT UNIQUE,
 	"mtime"	INTEGER,
@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS $table_name (
 	PRIMARY KEY("id")
 );
 
-CREATE INDEX IF NOT EXISTS "artist" ON $table_name (
+CREATE INDEX IF NOT EXISTS "artist" ON tracks (
 	"artist"	ASC
 );
 
-CREATE INDEX IF NOT EXISTS "title" ON $table_name (
+CREATE INDEX IF NOT EXISTS "title" ON tracks (
 	"title"
 );

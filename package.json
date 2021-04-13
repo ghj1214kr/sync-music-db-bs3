@@ -1,6 +1,6 @@
 {
   "name": "sync-music-db-bs3",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "index.js",
   "scripts": {

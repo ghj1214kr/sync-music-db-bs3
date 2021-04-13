@@ -56,11 +56,9 @@ the columns in the `tracks` table.
 ]
 ```
 
-### syncMusicDb = new SyncMusicDb({ db, dirs, tableName = 'tracks', delay = 1000 })
+### syncMusicDb = new SyncMusicDb({ db, dirs, delay = 1000 })
 create an `EventEmitter` to sync the specified `dirs` directory array to a
 [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) `db` instance.
-
-`tableName` specifies which table has `SyncMusicDb.TRACK_ATTRS`.
 
 `delay` specifies how long to wait for file changes (in ms) before reading them.
 

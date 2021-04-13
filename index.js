@@ -21,7 +21,7 @@ const UPSERT_TRACK =
     `set ${TRACK_ATTRS.slice(1).map(attr => `${attr}=excluded.${attr}`)}`;
 
 class SyncMusicDb extends EventEmitter {
-    constructor({ db, dirs, delay = 1000, tableName = 'tracks'}) {
+    constructor({ db, dirs, delay = 1000}) {
         super();
 
         this.globPattern = '/**/*.+(' + audioExtensions.join('|') + ')';
@@ -30,7 +30,6 @@ class SyncMusicDb extends EventEmitter {
         this.db = db;
         this.dirs = dirs.map(dir => path.resolve(dir));
 
-        this.tableName = tableName;
         this.delay = delay;
 
         // { path: fs.stat.mtimeMs }
@@ -69,8 +68,7 @@ class SyncMusicDb extends EventEmitter {
     }
 
     async createTable() {
-        await this.db.exec(
-            CREATE_TABLE.replace(/\$table_name/g, this.tableName));
+        await this.db.exec(CREATE_TABLE);
     }
 
     async prepareStatements() {
