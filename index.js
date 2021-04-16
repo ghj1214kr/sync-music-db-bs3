@@ -174,8 +174,8 @@ class SyncMusicDb extends EventEmitter {
             usePolling: true,
             ignoreInitial: true,
             atomic: this.delay
-        });
-        this.watcher.on('add', async (path) => {
+        })
+        .on('add', async (path) => {
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
@@ -188,8 +188,8 @@ class SyncMusicDb extends EventEmitter {
 
             this.isSynced = true;
             this.emit('synced', this.isSynced);
-        });
-        this.watcher.on('change', async (path) => {
+        })
+        .on('change', async (path) => {
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
@@ -202,8 +202,8 @@ class SyncMusicDb extends EventEmitter {
 
             this.isSynced = true;
             this.emit('synced', this.isSynced);
-        });
-        this.watcher.on('unlink', async (path) => {
+        })
+        .on('unlink', async (path) => {
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
@@ -211,6 +211,12 @@ class SyncMusicDb extends EventEmitter {
             
             this.isSynced = true;
             this.emit('synced', this.isSynced);
+        })
+        .on('ready', () => {
+            this.isReady = true;
+            this.isSynced = true;
+            this.emit('synced', this.isSynced);
+            this.emit('ready');
         });
     }
 
@@ -221,16 +227,7 @@ class SyncMusicDb extends EventEmitter {
             .then(() => this.refreshLocalMtimes())
             .then(() => this.removeDeadTracks())
             .then(() => this.addUpdatedTracks())
-            .then(() => {
-                this.refreshWatcher();
-
-                this.watcher.on('ready', () => {
-                    this.isReady = true;
-                    this.isSynced = true;
-                    this.emit('synced', this.isSynced);
-                    this.emit('ready');
-                });
-            })
+            .then(() => this.refreshWatcher())
             .catch(err => this.emit('error', err));
 
         return this;

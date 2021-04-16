@@ -88,6 +88,8 @@ is `sqliteDb` up-to-date with `dirs`?
 ### syncMusicDb.on('ready', () => {})
 the initial sync has finished (from a `.refresh` call).
 
+if `dirs` is empty, this event will not triggered.
+
 ### syncMusicDb.on('add', track => {})
 `track` has been added.
 
