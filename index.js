@@ -211,6 +211,12 @@ class SyncMusicDb extends EventEmitter {
             
             this.isSynced = true;
             this.emit('synced', this.isSynced);
+        })
+        .on('ready', () => {
+            this.isReady = true;
+            this.isSynced = true;
+            this.emit('synced', this.isSynced);
+            this.emit('ready');
         });
     }
 
@@ -221,16 +227,7 @@ class SyncMusicDb extends EventEmitter {
             .then(() => this.refreshLocalMtimes())
             .then(() => this.removeDeadTracks())
             .then(() => this.addUpdatedTracks())
-            .then(() => {
-                this.refreshWatcher();
-
-                this.watcher.on('ready', () => {
-                    this.isReady = true;
-                    this.isSynced = true;
-                    this.emit('synced', this.isSynced);
-                    this.emit('ready');
-                });
-            })
+            .then(() => this.refreshWatcher())
             .catch(err => this.emit('error', err));
 
         return this;

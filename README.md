@@ -68,16 +68,19 @@ create the `library` table in the `sqliteDb` instance.
 ### syncMusicDb.addDirs(dirs)
 add `dirs` to `syncMusicDb`.
 
-`.refresh` call is required for effect.
+`.refreshWatcher` call is required to take effect.
 
 ### syncMusicDb.removeDirs(dirs)
 remove `dirs` from `syncMusicDb`
 
-`.refresh` call is required for effect.
+`.refreshWatcher` call is required to take effect.
 
 ### syncMusicDb.refresh()
 do an initial sync with the specified `dirs` and begin watching it for
 new changes.
+
+### syncMusicDb.refreshWatcher()
+refresh watcher for `.addDirs` and `.removeDirs`.
 
 ### async syncMusicDb.close()
 stop syncing and watching `dirs`.
