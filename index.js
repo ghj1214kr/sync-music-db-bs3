@@ -54,7 +54,7 @@ class SyncMusicDb extends EventEmitter {
                 artist: common.artist,
                 album: common.album,
                 year: common.year,
-                duration: Math.floor(format.duration),
+                duration: Math.round(format.duration),
                 track_no: (common.track ? common.track.no : null),
                 tags: JSON.stringify(common.genre),
                 is_vbr: isVbr ? 0 : 1,
