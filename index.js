@@ -171,6 +171,7 @@ class SyncMusicDb extends EventEmitter {
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
         this.watcher = chokidar.watch(this.dirs.map(dir => path.resolve(dir) + this.globPattern), {
+            usePolling: true,
             ignoreInitial: true,
             atomic: this.delay
         })
