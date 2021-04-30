@@ -45,7 +45,7 @@ class SyncMusicDb extends EventEmitter {
     // get each column of (TRACK_ATTRS) from the media file
     static async getMetaData(filePath) {
         try {
-            const { common, format } = await mm.parseFile(filePath, { skipCovers: true });
+            const { common, format } = await mm.parseFile(filePath, { duration: true, skipCovers: true });
             const isVbr =
                 format.codec === 'MP3' && /^v/i.test(format.codecProfile);
 
@@ -171,7 +171,6 @@ class SyncMusicDb extends EventEmitter {
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
         this.watcher = chokidar.watch(this.dirs.map(dir => path.resolve(dir) + this.globPattern), {
-            usePolling: true,
             ignoreInitial: true,
             atomic: this.delay
         })

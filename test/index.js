@@ -12,7 +12,7 @@ const TMP_DIR = `${__dirname}${path.sep}music`;
 const DB_FILE = `${__dirname}${path.sep}..${path.sep}test.db`;
 
 const ABBEY_ROAD = `${TMP_DIR}${path.sep}the-beatles${path.sep}abbey-road`;
-const ED_BUYS_HOUSES = `${TMP_DIR}${path.sep}ed-buys-houses`;
+const ED_BUYS_HOUSES = `${TMP_DIR}${path.sep}ed-buys-houses/*`;
 
 const KETCHUP = Buffer.from('Ketchup');
 const MUSTARD = Buffer.from('Mustard');
@@ -77,7 +77,7 @@ function afterUpdate(syncer, file) {
 function afterRemove(syncer, sP) {
     return new Promise(resolve => {
         syncer.on('remove', p => {
-            if (path.dirname(p) === sP) {
+            if (path.dirname(p) === path.dirname(sP)) {
                 resolve();
             }
         });
