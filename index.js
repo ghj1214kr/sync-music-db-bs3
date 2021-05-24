@@ -50,8 +50,8 @@ class SyncMusicDb extends EventEmitter {
                 format.codec === 'MP3' && /^v/i.test(format.codecProfile);
 
             return {
-                title: common.title === undefined ? path.basename(filePath) : common.title,
-                artist: common.artist,
+                title: common.title ? common.title : path.basename(filePath),
+                artist: common.artists.join(","),
                 album: common.album,
                 year: common.year,
                 duration: Math.round(format.duration),
