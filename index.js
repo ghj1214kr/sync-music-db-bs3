@@ -48,10 +48,10 @@ class SyncMusicDb extends EventEmitter {
             const { common, format } = await mm.parseFile(filePath, { duration: true, skipCovers: true });
             const isVbr =
                 format.codec === 'MP3' && /^v/i.test(format.codecProfile);
-
+            
             return {
-                title: common.title ? common.title : path.basename(filePath),
-                artist: common.artists.join(","),
+                title: common.title ?? path.basename(filePath),
+                artist: common.artists?.join(","),
                 album: common.album,
                 year: common.year,
                 duration: Math.round(format.duration),
