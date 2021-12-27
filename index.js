@@ -172,7 +172,8 @@ class SyncMusicDb extends EventEmitter {
     refreshWatcher() {
         this.watcher = chokidar.watch(this.dirs.map(dir => path.resolve(dir) + this.globPattern), {
             ignoreInitial: true,
-            atomic: this.delay
+            atomic: this.delay,
+            useFsEvents: false,
         })
         .on('add', async (path) => {
             this.isSynced = false;
