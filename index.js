@@ -24,7 +24,6 @@ class SyncMusicDb extends EventEmitter {
     constructor({ db, dirs, delay = 1000}) {
         super();
 
-        this.globPattern = '/**/*.+(' + audioExtensions.join('|') + ')';
         this.regex = new RegExp('.+\.(' + audioExtensions.join('|') +')$', 'i');
 
         this.db = db;
@@ -170,12 +169,15 @@ class SyncMusicDb extends EventEmitter {
 
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
-        this.watcher = chokidar.watch(this.dirs.map(dir => path.resolve(dir) + this.globPattern), {
+        this.watcher = chokidar.watch(this.dirs, {
             ignoreInitial: true,
-            atomic: this.delay,
-            useFsEvents: false,
+            atomic: this.delay
         })
         .on('add', async (path) => {
+            if (!audioExtensions.includes(path.slice((path.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase())) {
+                return;
+            }
+
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
@@ -190,6 +192,10 @@ class SyncMusicDb extends EventEmitter {
             this.emit('synced', this.isSynced);
         })
         .on('change', async (path) => {
+            if (!audioExtensions.includes(path.slice((path.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase())) {
+                return;
+            }
+
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
@@ -204,6 +210,10 @@ class SyncMusicDb extends EventEmitter {
             this.emit('synced', this.isSynced);
         })
         .on('unlink', async (path) => {
+            if (!audioExtensions.includes(path.slice((path.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase())) {
+                return;
+            }
+            
             this.isSynced = false;
             this.emit('synced', this.isSynced);
 
