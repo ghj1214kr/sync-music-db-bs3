@@ -1,6 +1,6 @@
 {
   "name": "sync-music-db-bs3",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/ghj1214kr/sync-music-db-bs3#readme",
   "devDependencies": {
-    "better-sqlite3": "^7.4.5",
+    "better-sqlite3": "^7.5.0",
     "copy-dir": "^1.3.0",
     "rimraf": "^3.0.2",
     "tape-async": "^2.3.0"
@@ -36,10 +36,10 @@
   "dependencies": {
     "@jsdevtools/readdir-enhanced": "^6.0.4",
     "audio-extensions": "0.0.0",
-    "chokidar": "^3.5.2",
-    "music-metadata": "^7.11.4"
+    "chokidar": "^3.5.3",
+    "music-metadata": "^7.11.8"
   },
   "peerDependencies": {
-    "better-sqlite3": "^7.4.5"
+    "better-sqlite3": "^7.5.0"
   }
 }
