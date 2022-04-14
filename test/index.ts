@@ -1,11 +1,12 @@
-const SyncMusicDb = require('../');
-const copydir = require('copy-dir');
-const fs = require('fs');
-const path = require('path');
-const readdir = require('@jsdevtools/readdir-enhanced');
+import SyncMusicDb from '../src';
+import copydir from 'copy-dir';
+import fs from 'fs';
+import path from 'path';
+import readdir from '@jsdevtools/readdir-enhanced';
+import Database from 'better-sqlite3';
+import test from 'tape-async';
+
 const rimrafSync = require('rimraf').sync;
-const Database = require('better-sqlite3');
-const test = require('tape-async');
 
 const MUSIC_DIR = `${__dirname}${path.sep}_music`;
 const TMP_DIR = `${__dirname}${path.sep}music`;
@@ -46,13 +47,13 @@ fs.mkdirSync(TMP_DIR);
 // copy the music to a new directory so we can modify the files
 copydir.sync(MUSIC_DIR, TMP_DIR);
 
-function afterReady(syncer) {
+function afterReady(syncer: SyncMusicDb) {
     return new Promise(resolve => syncer.once('ready', resolve));
 }
 
-function afterAddTrack(syncer, file) {
-    return new Promise((resolve, reject) => {
-        syncer.once('add', track => {
+function afterAddTrack(syncer: SyncMusicDb, file: string) {
+    return new Promise<void>((resolve, reject) => {
+        syncer.once('add', (track: { path: any; }) => {
             if (track.path === file) {
                 resolve();
             } else {
@@ -62,9 +63,9 @@ function afterAddTrack(syncer, file) {
     });
 }
 
-function afterUpdate(syncer, file) {
-    return new Promise((resolve, reject) => {
-        syncer.once('update', track => {
+function afterUpdate(syncer: SyncMusicDb, file: string) {
+    return new Promise<void>((resolve, reject) => {
+        syncer.once('update', (track: { path: any; }) => {
             if (track.path === file) {
                 resolve();
             } else {
@@ -74,9 +75,9 @@ function afterUpdate(syncer, file) {
     });
 }
 
-function afterRemove(syncer, sP) {
-    return new Promise(resolve => {
-        syncer.on('remove', p => {
+function afterRemove(syncer: SyncMusicDb, sP: string) {
+    return new Promise<void>(resolve => {
+        syncer.on('remove', (p: string) => {
             if (path.dirname(p) === path.dirname(sP)) {
                 resolve();
             }
@@ -97,7 +98,7 @@ function afterRemove(syncer, sP) {
 
         for (const attr of SyncMusicDb.TRACK_ATTRS) {
             if (columns.indexOf(attr) < 0) {
-                t.fail(`"${column}" not found in library table`);
+                t.fail(`"${columns}" not found in library table`);
             }
         }
     });
@@ -158,7 +159,7 @@ function afterRemove(syncer, sP) {
         t.timeoutAfter(TIMEOUT);
         syncer.on('error', err => t.error(err));
 
-        const updateTitle = title => {
+        const updateTitle = (title: Buffer) => {
             const fd = fs.openSync(MUSTARD_FILE, 'r+');
             fs.writeSync(fd, title, 0, title.length, MUSTARD_POS);
             fs.closeSync(fd);

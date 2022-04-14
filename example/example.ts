@@ -1,11 +1,11 @@
-const SyncMusicDb = require('./');
-const Database = require('better-sqlite3');
+import SyncMusicDb from '../src';
+import Database from 'better-sqlite3';
 
 (async () => {
     const db = new Database("example.db");
-    const syncMusicDb = new SyncMusicDb({ db, dirs: ['./test/_music'] });
+    const syncMusicDb = new SyncMusicDb({ db, dirs: ['../test/_music'] });
 
-    await syncMusicDb.createTable();
+    syncMusicDb.createTable();
 
     console.time('sync');
 
