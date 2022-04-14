@@ -123,4 +123,4 @@ is all the metadata from `dirs` stored in `db`?
 
 ## License
 
-MIT
+LGPL-3.0+
