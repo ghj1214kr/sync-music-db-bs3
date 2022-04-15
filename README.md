@@ -14,11 +14,11 @@ anything that relies on a music library.
 
 ## Install
 
-    yarn add sync-music-db-bs3 better-sqlite3
+    yarn add sync-music-library better-sqlite3
 
 or
 
-    npm install sync-music-db-bs3 better-sqlite3
+    npm install sync-music-library better-sqlite3
 
 [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) is a
 [peerDependency](https://docs.npmjs.com/files/package.json#peerdependencies).
