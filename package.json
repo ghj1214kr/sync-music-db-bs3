@@ -1,12 +1,11 @@
 {
   "name": "sync-music-library",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/**/*.js",
-    "dist/**/*.d.ts"
+    "dist/**/*"
   ],
   "scripts": {
     "test": "ts-node test"
