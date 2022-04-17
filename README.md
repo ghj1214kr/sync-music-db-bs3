@@ -1,4 +1,4 @@
-# sync-music-library
+# sync-music-db-bs3
 
 keep music metadata in sync with a [sqlite](https://sqlite.org/index.html)
 database. watches a directory for changes, and updates a sqlite table with
@@ -14,11 +14,11 @@ anything that relies on a music library.
 
 ## Install
 
-    yarn add sync-music-library better-sqlite3
+    yarn add sync-music-db-bs3 better-sqlite3
 
 or
 
-    npm install sync-music-library better-sqlite3
+    npm install sync-music-db-bs3 better-sqlite3
 
 [better-sqlite3](https://www.npmjs.com/package/better-sqlite3) is a
 [peerDependency](https://docs.npmjs.com/files/package.json#peerdependencies).
@@ -27,12 +27,12 @@ this module doesn't explicitly `require` it, but it takes a better-sqlite3 `db`i
 ## Example
 
 ```typescript
-const SyncMusicDb = require('./');
+const SyncMusicDb = require('../');
 const Database = require('better-sqlite3');
 
 (async () => {
     const database = new Database("example.db");
-    const syncMusicDb = new SyncMusicDb({ db: database, dirs: ['./test/_music'] });
+    const syncMusicDb = new SyncMusicDb({ db: database, dirs: ['D:/test/music'] });
 
     await syncMusicDb.createTable();
 

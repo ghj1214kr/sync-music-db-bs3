@@ -1,6 +1,6 @@
 {
-  "name": "sync-music-library",
-  "version": "1.3.3",
+  "name": "sync-music-db-bs3",
+  "version": "1.3.4",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ghj1214kr/sync-music-library.git"
+    "url": "git+https://github.com/ghj1214kr/sync-music-db-bs3.git"
   },
   "keywords": [
     "sync",
@@ -27,9 +27,9 @@
   "author": "ghj1214kr <ghj1214kr@naver.com>",
   "license": "LGPL-3.0+",
   "bugs": {
-    "url": "https://github.com/ghj1214kr/sync-music-library/issues"
+    "url": "https://github.com/ghj1214kr/sync-music-db-bs3/issues"
   },
-  "homepage": "https://github.com/ghj1214kr/sync-music-library#readme",
+  "homepage": "https://github.com/ghj1214kr/sync-music-db-bs3#readme",
   "devDependencies": {
     "@types/better-sqlite3": "^7.5.0",
     "@types/tape-async": "^2.3.1",
