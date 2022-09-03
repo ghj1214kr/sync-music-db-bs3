@@ -1,12 +1,15 @@
-import SyncMusicDb from '../src';
+import SyncMusicDb from '../src/index.js';
 import copydir from 'copy-dir';
 import fs from 'fs';
 import path from 'path';
 import readdir from '@jsdevtools/readdir-enhanced';
 import Database from 'better-sqlite3';
 import test from 'tape-async';
+import rimrafSync from 'rimraf';
+import { fileURLToPath } from 'url';
 
-const rimrafSync = require('rimraf').sync;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const MUSIC_DIR = `${__dirname}${path.sep}_music`;
 const TMP_DIR = `${__dirname}${path.sep}music`;
@@ -33,7 +36,7 @@ function removeDb() {
 
 function removeTmp() {
     try {
-        rimrafSync(TMP_DIR);
+        rimrafSync.sync(TMP_DIR);
     } catch (e) {
         // pass
     }
@@ -197,7 +200,7 @@ function afterRemove(syncer: SyncMusicDb, sP: string) {
 
         const mustardContents = fs.readFileSync(MUSTARD_FILE);
 
-        rimrafSync(ABBEY_ROAD);
+        rimrafSync.sync(ABBEY_ROAD);
         syncer.refresh();
         await afterReady(syncer);
 
@@ -206,7 +209,7 @@ function afterRemove(syncer: SyncMusicDb, sP: string) {
                 .all(`${ABBEY_ROAD}%`).length,
             'syncer removes tracks after .refresh()');
 
-        setImmediate(() => rimrafSync(ED_BUYS_HOUSES));
+        setImmediate(() => rimrafSync.sync(ED_BUYS_HOUSES));
         await afterRemove(syncer, ED_BUYS_HOUSES);
 
         t.notOk(db.prepare(

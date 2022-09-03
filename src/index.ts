@@ -1,10 +1,14 @@
 import fs from "fs";
-import mm from "music-metadata";
+import { parseFile } from "music-metadata";
 import path from "path";
 import readdir from "@jsdevtools/readdir-enhanced";
 import chokidar from "chokidar";
 import { EventEmitter } from "events";
 import { Database, Statement } from "better-sqlite3";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // each of the columns in our database table
 const TRACK_ATTRS = [
@@ -114,7 +118,7 @@ class SyncMusicDb extends EventEmitter {
   // get each column of (TRACK_ATTRS) from the media file
   static async getMetaData(filePath: string): Promise<metadata | {}> {
     try {
-      const { common, format } = await mm.parseFile(filePath, {
+      const { common, format } = await parseFile(filePath, {
         duration: true,
         skipCovers: true,
       });
