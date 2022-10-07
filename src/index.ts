@@ -1,14 +1,10 @@
 import fs from "fs";
-import { parseFile } from "music-metadata";
+import * as mm from "music-metadata";
 import path from "path";
 import readdir from "@jsdevtools/readdir-enhanced";
 import chokidar from "chokidar";
 import { EventEmitter } from "events";
 import { Database, Statement } from "better-sqlite3";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const audioExtensions = [
   "wav",
@@ -63,10 +59,6 @@ const TRACK_ATTRS = [
   "container",
 ];
 
-const CREATE_TABLE = fs
-  .readFileSync(path.join(__dirname, "library.sql"))
-  .toString();
-
 const UPSERT_TRACK =
   `insert into library (${TRACK_ATTRS}) values ` +
   `(${TRACK_ATTRS.map(() => "?").join(",")}) on conflict(path) do update ` +
@@ -116,7 +108,7 @@ class SyncMusicDb extends EventEmitter {
   // get each column of (TRACK_ATTRS) from the media file
   static async getMetaData(filePath: string): Promise<metadata | {}> {
     try {
-      const { common, format } = await parseFile(filePath, {
+      const { common, format } = await mm.parseFile(filePath, {
         duration: true,
         skipCovers: true,
       });
@@ -144,7 +136,34 @@ class SyncMusicDb extends EventEmitter {
   }
 
   createTable() {
-    this.db.exec(CREATE_TABLE);
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS library (
+        "id"	INTEGER,
+        "path"	TEXT UNIQUE,
+        "mtime"	INTEGER,
+        "title"	TEXT,
+        "artist"	TEXT,
+        "album"	TEXT,
+        "year"	INTEGER,
+        "duration"	INTEGER,
+        "track_no"	INTEGER,
+        "disk"	INTEGER DEFAULT 1,
+        "tags"	TEXT,
+        "is_vbr"	INTEGER DEFAULT 0,
+        "bitrate"	INTEGER,
+        "codec"	TEXT,
+        "container"	TEXT,
+        PRIMARY KEY("id")
+      );
+      
+      CREATE INDEX IF NOT EXISTS "artist" ON library (
+        "artist"	ASC
+      );
+      
+      CREATE INDEX IF NOT EXISTS "title" ON library (
+        "title"
+      );    
+    `);
   }
 
   prepareStatements() {

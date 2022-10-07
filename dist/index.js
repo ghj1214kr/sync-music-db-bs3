@@ -1,12 +1,37 @@
-import fs from "fs";
-import { parseFile } from "music-metadata";
-import path from "path";
-import readdir from "@jsdevtools/readdir-enhanced";
-import chokidar from "chokidar";
-import { EventEmitter } from "events";
-import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = __importDefault(require("fs"));
+const mm = __importStar(require("music-metadata"));
+const path_1 = __importDefault(require("path"));
+const readdir_enhanced_1 = __importDefault(require("@jsdevtools/readdir-enhanced"));
+const chokidar_1 = __importDefault(require("chokidar"));
+const events_1 = require("events");
 const audioExtensions = [
     "wav",
     "bwf",
@@ -57,17 +82,25 @@ const TRACK_ATTRS = [
     "codec",
     "container",
 ];
-const CREATE_TABLE = fs
-    .readFileSync(path.join(__dirname, "library.sql"))
-    .toString();
 const UPSERT_TRACK = `insert into library (${TRACK_ATTRS}) values ` +
     `(${TRACK_ATTRS.map(() => "?").join(",")}) on conflict(path) do update ` +
     `set ${TRACK_ATTRS.slice(1).map((attr) => `${attr}=excluded.${attr}`)}`;
-class SyncMusicDb extends EventEmitter {
+class SyncMusicDb extends events_1.EventEmitter {
+    db;
+    dirs;
+    delay;
+    localMtimes;
+    isReady;
+    isSynced;
+    removeDirStmt;
+    removeTrackStmt;
+    upsertTrackStmt;
+    watcher;
+    static TRACK_ATTRS;
     constructor({ db, dirs, delay = 1000 }) {
         super();
         this.db = db;
-        this.dirs = dirs.map((dir) => path.resolve(dir));
+        this.dirs = dirs.map((dir) => path_1.default.resolve(dir));
         this.delay = delay;
         // { path: fs.stat.mtimeMs }
         this.localMtimes = new Map();
@@ -79,7 +112,7 @@ class SyncMusicDb extends EventEmitter {
     // get each column of (TRACK_ATTRS) from the media file
     static async getMetaData(filePath) {
         try {
-            const { common, format } = await parseFile(filePath, {
+            const { common, format } = await mm.parseFile(filePath, {
                 duration: true,
                 skipCovers: true,
             });
@@ -87,7 +120,7 @@ class SyncMusicDb extends EventEmitter {
                 format.codecProfile !== undefined &&
                 /^v/i.test(format.codecProfile);
             return {
-                title: common.title ?? path.basename(filePath),
+                title: common.title ?? path_1.default.basename(filePath),
                 artist: common.artists?.join(","),
                 album: common.album,
                 year: common.year,
@@ -101,11 +134,38 @@ class SyncMusicDb extends EventEmitter {
             };
         }
         catch (e) {
-            return { title: path.basename(filePath) };
+            return { title: path_1.default.basename(filePath) };
         }
     }
     createTable() {
-        this.db.exec(CREATE_TABLE);
+        this.db.exec(`
+      CREATE TABLE IF NOT EXISTS library (
+        "id"	INTEGER,
+        "path"	TEXT UNIQUE,
+        "mtime"	INTEGER,
+        "title"	TEXT,
+        "artist"	TEXT,
+        "album"	TEXT,
+        "year"	INTEGER,
+        "duration"	INTEGER,
+        "track_no"	INTEGER,
+        "disk"	INTEGER DEFAULT 1,
+        "tags"	TEXT,
+        "is_vbr"	INTEGER DEFAULT 0,
+        "bitrate"	INTEGER,
+        "codec"	TEXT,
+        "container"	TEXT,
+        PRIMARY KEY("id")
+      );
+      
+      CREATE INDEX IF NOT EXISTS "artist" ON library (
+        "artist"	ASC
+      );
+      
+      CREATE INDEX IF NOT EXISTS "title" ON library (
+        "title"
+      );    
+    `);
     }
     prepareStatements() {
         this.removeDirStmt = this.db.prepare("delete from library where path like ?");
@@ -119,7 +179,7 @@ class SyncMusicDb extends EventEmitter {
     }
     // remove all tracks that begin with directory
     removeDbDir(dir) {
-        this.removeDirStmt.run(`${dir}${path.sep}%`);
+        this.removeDirStmt.run(`${dir}${path_1.default.sep}%`);
     }
     // remove a single track based on path
     removeDbTrack(trackPath) {
@@ -138,7 +198,7 @@ class SyncMusicDb extends EventEmitter {
         const promiseArray = [];
         for (const dir of this.dirs) {
             promiseArray.push(new Promise((resolve, reject) => {
-                const dirStream = readdir.stream(dir, {
+                const dirStream = readdir_enhanced_1.default.stream(dir, {
                     filter: regex,
                     basePath: dir,
                     deep: true,
@@ -186,7 +246,7 @@ class SyncMusicDb extends EventEmitter {
     }
     // listen for file updates or removals and update the database accordingly
     refreshWatcher() {
-        this.watcher = chokidar
+        this.watcher = chokidar_1.default
             .watch(this.dirs, {
             ignoreInitial: true,
             atomic: this.delay,
@@ -197,7 +257,7 @@ class SyncMusicDb extends EventEmitter {
             }
             this.isSynced = false;
             this.emit("synced", this.isSynced);
-            const stats = await fs.promises.stat(path);
+            const stats = await fs_1.default.promises.stat(path);
             this.upsertDbTrack(Object.assign({
                 path: path,
                 mtime: Math.floor(stats.mtimeMs),
@@ -211,7 +271,7 @@ class SyncMusicDb extends EventEmitter {
             }
             this.isSynced = false;
             this.emit("synced", this.isSynced);
-            const stats = await fs.promises.stat(path);
+            const stats = await fs_1.default.promises.stat(path);
             this.upsertDbTrack(Object.assign({
                 path: path,
                 mtime: Math.floor(stats.mtimeMs),
@@ -260,12 +320,12 @@ class SyncMusicDb extends EventEmitter {
         this.emit("synced", this.isSynced);
     }
     addDirs(dirs) {
-        this.dirs.push(...dirs.map((dir) => path.resolve(dir)));
+        this.dirs.push(...dirs.map((dir) => path_1.default.resolve(dir)));
         this.dirs = [...new Set(this.dirs)];
     }
     removeDirs(dirs) {
-        this.dirs = this.dirs.filter((dir) => !dirs.map((dir) => path.resolve(dir)).includes(dir));
+        this.dirs = this.dirs.filter((dir) => !dirs.map((dir) => path_1.default.resolve(dir)).includes(dir));
     }
 }
 SyncMusicDb.TRACK_ATTRS = TRACK_ATTRS;
-export default SyncMusicDb;
+exports.default = SyncMusicDb;
