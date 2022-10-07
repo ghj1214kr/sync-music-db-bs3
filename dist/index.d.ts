@@ -11,8 +11,6 @@ interface SyncMusicDbType {
     delay?: number;
 }
 declare class SyncMusicDb extends EventEmitter {
-    audioExtensions: string[];
-    regex: RegExp;
     db: Database;
     dirs: string[];
     delay: number;

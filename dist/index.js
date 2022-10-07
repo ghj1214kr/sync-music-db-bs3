@@ -4,9 +4,43 @@ import path from "path";
 import readdir from "@jsdevtools/readdir-enhanced";
 import chokidar from "chokidar";
 import { EventEmitter } from "events";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const audioExtensions = [
+    "wav",
+    "bwf",
+    "raw",
+    "aiff",
+    "flac",
+    "m4a",
+    "pac",
+    "tta",
+    "wv",
+    "ast",
+    "aac",
+    "mp2",
+    "mp3",
+    "mp4",
+    "amr",
+    "s3m",
+    "3gp",
+    "act",
+    "au",
+    "dct",
+    "dss",
+    "gsm",
+    "m4p",
+    "mmf",
+    "mpc",
+    "ogg",
+    "oga",
+    "opus",
+    "ra",
+    "sln",
+    "vox",
+];
+const regex = new RegExp(".+.(" + audioExtensions.join("|") + ")$", "i");
 // each of the columns in our database table
 const TRACK_ATTRS = [
     "path",
@@ -32,40 +66,6 @@ const UPSERT_TRACK = `insert into library (${TRACK_ATTRS}) values ` +
 class SyncMusicDb extends EventEmitter {
     constructor({ db, dirs, delay = 1000 }) {
         super();
-        this.audioExtensions = [
-            "wav",
-            "bwf",
-            "raw",
-            "aiff",
-            "flac",
-            "m4a",
-            "pac",
-            "tta",
-            "wv",
-            "ast",
-            "aac",
-            "mp2",
-            "mp3",
-            "mp4",
-            "amr",
-            "s3m",
-            "3gp",
-            "act",
-            "au",
-            "dct",
-            "dss",
-            "gsm",
-            "m4p",
-            "mmf",
-            "mpc",
-            "ogg",
-            "oga",
-            "opus",
-            "ra",
-            "sln",
-            "vox",
-        ];
-        this.regex = new RegExp(".+.(" + this.audioExtensions.join("|") + ")$", "i");
         this.db = db;
         this.dirs = dirs.map((dir) => path.resolve(dir));
         this.delay = delay;
@@ -84,7 +84,7 @@ class SyncMusicDb extends EventEmitter {
                 skipCovers: true,
             });
             const isVbr = format.codec === "MP3" &&
-                format.codecProfile &&
+                format.codecProfile !== undefined &&
                 /^v/i.test(format.codecProfile);
             return {
                 title: common.title ?? path.basename(filePath),
@@ -94,14 +94,14 @@ class SyncMusicDb extends EventEmitter {
                 duration: format.duration && Math.round(format.duration),
                 track_no: common.track ? common.track.no : null,
                 tags: JSON.stringify(common.genre),
-                is_vbr: isVbr ? 0 : 1,
+                is_vbr: isVbr ? 1 : 0,
                 bitrate: format.bitrate && Math.floor(format.bitrate / 1000),
                 codec: format.codec,
                 container: format.container,
             };
         }
         catch (e) {
-            return {};
+            return { title: path.basename(filePath) };
         }
     }
     createTable() {
@@ -139,7 +139,7 @@ class SyncMusicDb extends EventEmitter {
         for (const dir of this.dirs) {
             promiseArray.push(new Promise((resolve, reject) => {
                 const dirStream = readdir.stream(dir, {
-                    filter: this.regex,
+                    filter: regex,
                     basePath: dir,
                     deep: true,
                     stats: true,
@@ -192,7 +192,7 @@ class SyncMusicDb extends EventEmitter {
             atomic: this.delay,
         })
             .on("add", async (path) => {
-            if (!this.audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
+            if (!audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
                 return;
             }
             this.isSynced = false;
@@ -206,7 +206,7 @@ class SyncMusicDb extends EventEmitter {
             this.emit("synced", this.isSynced);
         })
             .on("change", async (path) => {
-            if (!this.audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
+            if (!audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
                 return;
             }
             this.isSynced = false;
@@ -220,7 +220,7 @@ class SyncMusicDb extends EventEmitter {
             this.emit("synced", this.isSynced);
         })
             .on("unlink", async (path) => {
-            if (!this.audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
+            if (!audioExtensions.includes(path.slice(((path.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase())) {
                 return;
             }
             this.isSynced = false;
