@@ -118,7 +118,7 @@ class SyncMusicDb extends EventEmitter {
         /^v/i.test(format.codecProfile);
 
       return {
-        title: common.title ?? path.basename(filePath),
+        title: common.title ?? path.basename(filePath).normalize(),
         artist: common.artists?.join(","),
         album: common.album,
         year: common.year,
@@ -131,7 +131,7 @@ class SyncMusicDb extends EventEmitter {
         container: format.container,
       };
     } catch (e) {
-      return { title: path.basename(filePath) };
+      return { title: path.basename(filePath).normalize() };
     }
   }
 
@@ -190,7 +190,7 @@ class SyncMusicDb extends EventEmitter {
   // remove a single track based on path
   removeDbTrack(trackPath: string) {
     this.removeTrackStmt!.run(trackPath);
-    this.emit("remove", trackPath);
+    this.emit("remove", trackPath.normalize());
   }
 
   // add a single track
@@ -257,7 +257,7 @@ class SyncMusicDb extends EventEmitter {
 
     for (const [path, mtime] of this.localMtimes) {
       const track = await SyncMusicDb.getMetaData(path);
-      Object.assign(track, { path, mtime });
+      Object.assign(track, { path: path.normalize(), mtime });
       this.upsertDbTrack(track);
     }
 
@@ -317,7 +317,7 @@ class SyncMusicDb extends EventEmitter {
         this.upsertDbTrack(
           Object.assign(
             {
-              path: path,
+              path: path.normalize(),
               mtime: Math.floor(stats.mtimeMs),
             },
             await SyncMusicDb.getMetaData(path)

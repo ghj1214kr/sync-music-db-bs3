@@ -120,7 +120,7 @@ class SyncMusicDb extends events_1.EventEmitter {
                 format.codecProfile !== undefined &&
                 /^v/i.test(format.codecProfile);
             return {
-                title: common.title ?? path_1.default.basename(filePath),
+                title: common.title ?? path_1.default.basename(filePath).normalize(),
                 artist: common.artists?.join(","),
                 album: common.album,
                 year: common.year,
@@ -134,7 +134,7 @@ class SyncMusicDb extends events_1.EventEmitter {
             };
         }
         catch (e) {
-            return { title: path_1.default.basename(filePath) };
+            return { title: path_1.default.basename(filePath).normalize() };
         }
     }
     createTable() {
@@ -184,7 +184,7 @@ class SyncMusicDb extends events_1.EventEmitter {
     // remove a single track based on path
     removeDbTrack(trackPath) {
         this.removeTrackStmt.run(trackPath);
-        this.emit("remove", trackPath);
+        this.emit("remove", trackPath.normalize());
     }
     // add a single track
     upsertDbTrack(track, update = false) {
@@ -238,7 +238,7 @@ class SyncMusicDb extends events_1.EventEmitter {
         this.db.exec("begin transaction");
         for (const [path, mtime] of this.localMtimes) {
             const track = await SyncMusicDb.getMetaData(path);
-            Object.assign(track, { path, mtime });
+            Object.assign(track, { path: path.normalize(), mtime });
             this.upsertDbTrack(track);
         }
         this.db.exec("commit");
@@ -273,7 +273,7 @@ class SyncMusicDb extends events_1.EventEmitter {
             this.emit("synced", this.isSynced);
             const stats = await fs_1.default.promises.stat(path);
             this.upsertDbTrack(Object.assign({
-                path: path,
+                path: path.normalize(),
                 mtime: Math.floor(stats.mtimeMs),
             }, await SyncMusicDb.getMetaData(path)), true);
             this.isSynced = true;

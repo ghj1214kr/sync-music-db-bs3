@@ -1,6 +1,6 @@
 {
   "name": "sync-music-db-bs3",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "keep music metadata in sync with a sqlite database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/ghj1214kr/sync-music-db-bs3#readme",
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
+    "@types/better-sqlite3": "^7.6.2",
     "@types/rimraf": "^3.0.2",
     "@types/tape-async": "^2.3.1",
     "better-sqlite3": "^7.6.2",
